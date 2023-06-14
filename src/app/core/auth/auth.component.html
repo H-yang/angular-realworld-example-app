@@ -15,6 +15,7 @@
         <form [formGroup]="authForm" (ngSubmit)="submitForm()">
           <fieldset [disabled]="isSubmitting">
             <fieldset class="form-group">
+              <label *ngIf="authType == 'register'">Username</label>
               <input
                 *ngIf="authType === 'register'"
                 formControlName="username"
@@ -23,15 +24,22 @@
                 type="text"
               />
             </fieldset>
+
             <fieldset class="form-group">
+              <label>Email</label>
               <input
                 formControlName="email"
                 placeholder="Email"
                 class="form-control form-control-lg"
                 type="text"
               />
+              <div *ngIf="authForm.controls.email.errors?.['email']">
+                <span style="color: red">Email address is invalid</span>
+              </div>
             </fieldset>
+
             <fieldset class="form-group">
+              <label>Password</label>
               <input
                 formControlName="password"
                 placeholder="Password"
@@ -39,6 +47,26 @@
                 type="password"
               />
             </fieldset>
+
+            <fieldset class="form-group">
+              <label *ngIf="authType == 'register'">Re-enter Password</label>
+              <input
+                *ngIf="authType == 'register'"
+                formControlName="passwordCheck"
+                placeholder="Re-enter Password"
+                class="form-control form-control-lg"
+                type="password"
+              />
+              <div
+                *ngIf="
+                  authForm.hasError('notMatch') &&
+                  authForm.controls['passwordCheck']?.touched
+                "
+              >
+                <span style="color: red">Password is not match</span>
+              </div>
+            </fieldset>
+
             <button
               class="btn btn-lg btn-primary pull-xs-right"
               [disabled]="!authForm.valid"

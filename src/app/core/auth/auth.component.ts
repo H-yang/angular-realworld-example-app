@@ -4,6 +4,9 @@ import {
   FormGroup,
   FormControl,
   ReactiveFormsModule,
+  ValidatorFn,
+  ValidationErrors,
+  AbstractControl,
 } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { NgIf } from "@angular/common";
@@ -16,6 +19,7 @@ import { Subject } from "rxjs";
 interface AuthForm {
   email: FormControl<string>;
   password: FormControl<string>;
+  passwordCheck?: FormControl<string | null>;
   username?: FormControl<string>;
 }
 
@@ -29,6 +33,7 @@ export class AuthComponent implements OnInit, OnDestroy {
   authType = "";
   title = "";
   errors: Errors = { errors: {} };
+
   isSubmitting = false;
   authForm: FormGroup<AuthForm>;
   destroy$ = new Subject<void>();
@@ -39,16 +44,24 @@ export class AuthComponent implements OnInit, OnDestroy {
     private readonly userService: UserService
   ) {
     // use FormBuilder to create a form group
-    this.authForm = new FormGroup<AuthForm>({
-      email: new FormControl("", {
-        validators: [Validators.required],
-        nonNullable: true,
-      }),
-      password: new FormControl("", {
-        validators: [Validators.required],
-        nonNullable: true,
-      }),
-    });
+    this.authForm = new FormGroup<AuthForm>(
+      {
+        email: new FormControl("", {
+          validators: [Validators.required, Validators.email],
+          nonNullable: true,
+        }),
+        password: new FormControl("", {
+          validators: [Validators.required],
+          nonNullable: true,
+        }),
+        passwordCheck: new FormControl("", {
+          nonNullable: false,
+        }),
+      },
+      {
+        validators: [this.match("password", "passwordCheck")],
+      }
+    );
   }
 
   ngOnInit(): void {
@@ -94,5 +107,22 @@ export class AuthComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
       },
     });
+  }
+
+  //todo: move this to validators
+  match(controlName: string, matchControlName: string): ValidatorFn {
+    return (controls: AbstractControl) => {
+      if (this.authType === "login") {
+        return null;
+      }
+
+      const control = controls.get(controlName);
+      const matchControl = controls.get(matchControlName);
+
+      if (!matchControl?.errors && control?.value !== matchControl?.value) {
+        return { notMatch: true };
+      }
+      return null;
+    };
   }
 }
